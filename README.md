@@ -53,7 +53,7 @@ DIGITE O 2° TEMA: INSERT
 
 A MATÉRIA Banco de Dados FOI ADICIONADA COM SUCESSO!!
 ## 👨‍💻 Autor
-Desenvolvido por Seu Nome – estudante de Análise e Desenvolvimento de Sistemas.
+Desenvolvido por Bruno – estudante de Análise e Desenvolvimento de Sistemas.
 
 ## 📬 Sugestões
 Sinta-se à vontade para abrir uma issue ou enviar um pull request com melhorias, sugestões ou correções.
