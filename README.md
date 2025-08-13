@@ -33,17 +33,15 @@ Biblioteca nativa json
 Python 3 instalado na sua máquina
 
 ## 📎 Exemplo de uso
-text
-Copiar
-Editar
     GERADOR INTELIGENTE DE ESTUDOS     
 
       M E N U  DE  E S T U D O S       
 
  [1]  ADICIONAR UMA MATÉRIA 
  [2]  LISTAR MATÉRIAS CADASTRADAS 
- [3]  REMOVER MÁTERIA        
- [4]  S A I R  
+ [3]  REMOVER MÁTERIA 
+ [4]  EDITAR MÁTERIA / TEMA       
+ [5]  S A I R  
 
 DIGITE OQUE DESEJA: 1
 DIGITE O NOME DA MATÉRIA: Banco de Dados
