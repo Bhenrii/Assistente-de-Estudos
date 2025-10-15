@@ -41,7 +41,8 @@ Python 3 instalado na sua máquina
  [2]  LISTAR MATÉRIAS CADASTRADAS 
  [3]  REMOVER MÁTERIA 
  [4]  EDITAR MÁTERIA / TEMA       
- [5]  S A I R  
+ [5
+ ]  S A I R  
 
 DIGITE OQUE DESEJA: 1
 DIGITE O NOME DA MATÉRIA: Banco de Dados

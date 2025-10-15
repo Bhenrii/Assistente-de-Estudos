@@ -1,22 +1,162 @@
-import json
+import sqlite3
 
-# função para salvar os dados
-def salvar_dados():
-    with open("materias.json", "w", encoding="utf-8") as arquivo:
-        json.dump(materias, arquivo, indent=4, ensure_ascii=False)
 
-# função para carregar matérias já salvas
-def carregar_dados():
-    try:
-        with open("materias.json", "r", encoding="utf-8") as arquivo:
-            return json.load(arquivo)
-    except FileNotFoundError:
-        return []
-    except Exception as erro:
-        print("Erro ao carregar JSON:", erro)
-        return []
+# CONFIGURAÇÃO INICIAL DO BANCO
 
-# função para mostrar o menu
+# Cria (ou conecta) ao banco local
+conexao = sqlite3.connect("materias.db")
+cursor = conexao.cursor()
+
+# Cria tabela de matérias
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS materias (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT
+)
+""")
+
+# Cria tabela de temas (relacionada à matéria)
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS temas (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_materia INTEGER,
+    nome TEXT,
+    FOREIGN KEY (id_materia) REFERENCES materias(id)
+)
+""")
+
+conexao.commit()
+
+
+# FUNÇÕES DO PROGRAMA
+def adicionar_materia():
+    print(" ADICIONANDO MATÉRIA NOVA  \n")
+    materia_nova = input('DIGITE O NOME DA MATÉRIA: ')
+    qtd_temas = int(input(f"QUANTOS TEMAS PRETENDE ADICIONAR PARA {materia_nova}: "))
+
+    temas = []
+    for i in range(qtd_temas):
+        tema = input(f'DIGITE O {i + 1}° TEMA: ')
+        temas.append(tema)
+
+    # Inserir matéria
+    cursor.execute("INSERT INTO materias (nome) VALUES (?)", (materia_nova,))
+    id_materia = cursor.lastrowid  # pega o ID da matéria recém-criada
+
+    # Inserir temas
+    for tema in temas:
+        cursor.execute("INSERT INTO temas (id_materia, nome) VALUES (?, ?)", (id_materia, tema))
+
+    conexao.commit()
+    print(f'A MATÉRIA {materia_nova} FOI ADICIONADA COM SUCESSO!!\n')
+
+
+def listar_materias():
+    cursor.execute("SELECT * FROM materias")
+    materias = cursor.fetchall()
+
+    if len(materias) == 0:
+        print('NENHUMA MATÉRIA CADASTRADA\n')
+    else:
+        for materia in materias:
+            print(f"{materia[0]}. {materia[1]}")
+            cursor.execute("SELECT nome FROM temas WHERE id_materia = ?", (materia[0],))
+            temas = cursor.fetchall()
+            for tema in temas:
+                print(f'  - {tema[0]}')
+        print()
+
+
+def remover_materia():
+    cursor.execute("SELECT * FROM materias")
+    materias = cursor.fetchall()
+
+    if len(materias) == 0:
+        print('NÃO EXISTE MATÉRIAS CADASTRADAS.\n')
+        return
+
+    listar_materias()
+    remover = int(input('DIGITE QUAL NÚMERO DESEJA REMOVER: '))
+    print()
+
+    cursor.execute("SELECT * FROM materias WHERE id = ?", (remover,))
+    materia = cursor.fetchone()
+
+    if materia:
+        cursor.execute("DELETE FROM temas WHERE id_materia = ?", (remover,))
+        cursor.execute("DELETE FROM materias WHERE id = ?", (remover,))
+        conexao.commit()
+        print(f'A MATÉRIA "{materia[1]}" FOI REMOVIDA.\n')
+    else:
+        print('MATÉRIA INFORMADA NÃO EXISTE.\n')
+
+
+def editar_materia():
+    listar_materias()
+    print()
+    select = int(input('QUAL MATÉRIA QUER EDITAR? '))
+    print()
+
+    cursor.execute("SELECT * FROM materias WHERE id = ?", (select,))
+    materia = cursor.fetchone()
+
+    if not materia:
+        print('OPÇÃO INCORRETA.\n')
+        return
+
+    print(f"{materia[0]}. {materia[1]}\n")
+    cursor.execute("SELECT * FROM temas WHERE id_materia = ?", (materia[0],))
+    temas = cursor.fetchall()
+
+    for t in temas:
+        print(f'   - {t[2]}')
+    print()
+
+    print(' 1. EDITAR NOME DA MATÉRIA\n')
+    print(' 2. REMOVER OU ADICIONAR TEMA\n')
+    print()
+    opcao = int(input("QUAL OPÇÃO DESEJA: "))
+    print()
+
+    if opcao == 1:
+        novo_nome = input("NOVO NOME DA MATÉRIA: ")
+        cursor.execute("UPDATE materias SET nome = ? WHERE id = ?", (novo_nome, materia[0]))
+        conexao.commit()
+        print('Nome da matéria atualizado com sucesso.\n')
+
+    elif opcao == 2:
+        print('1. ADICIONAR TEMA')
+        print('2. REMOVER TEMA\n')
+        opcao_2 = int(input('ESCOLHA QUAL OPÇÃO DESEJA: '))
+
+        if opcao_2 == 1:
+            novo_tema = input('NOVO TEMA: ')
+            cursor.execute("INSERT INTO temas (id_materia, nome) VALUES (?, ?)", (materia[0], novo_tema))
+            conexao.commit()
+            print(f'Tema "{novo_tema}" adicionado com sucesso.\n')
+
+        elif opcao_2 == 2:
+            cursor.execute("SELECT * FROM temas WHERE id_materia = ?", (materia[0],))
+            temas = cursor.fetchall()
+            for i, t in enumerate(temas, start=1):
+                print(f"  {i} - {t[2]}")
+
+            print()
+            excluir = int(input(f"QUAL NÚMERO DESEJA EXCLUIR DE {materia[1]}? "))
+            if 1 <= excluir <= len(temas):
+                id_tema = temas[excluir - 1][0]
+                nome_tema = temas[excluir - 1][2]
+                cursor.execute("DELETE FROM temas WHERE id = ?", (id_tema,))
+                conexao.commit()
+                print(f'Tema "{nome_tema}" removido com sucesso.\n')
+            else:
+                print('Número inválido.\n')
+        else:
+            print('OPÇÃO INCORRETA.\n')
+    else:
+        print('OPÇÃO INCORRETA.\n')
+
+
 def menu():
     print('    GERADOR INTELIGENTE DE ESTUDOS     \n')
     print('      M E N U  DE  E S T U D O S       \n')
@@ -29,111 +169,24 @@ def menu():
     resposta = int(input('DIGITE O QUE DESEJA: \n'))
     return resposta
 
-# Função para listar matérias
-def listar_materias():
-    if len(materias) == 0:
-        print('NENHUMA MATÉRIA CADASTRADA\n')
-    else:
-        for indice, materia in enumerate(materias, start=1):
-            print(f"{indice}. {materia['nome']}")
-            for tema in materia['temas']:
-                print(f'  - {tema}')
-        print()
 
-# Carregar dados ao iniciar
-materias = carregar_dados()
-
-# Loop principal do programa
+# LOOP PRINCIPAL
 while True:
     escolha = menu()
 
     if escolha == 1:
-        print(" ADICIONANDO MATÉRIA NOVA  \n")
-        materia_nova = input('DIGITE O NOME DA MATÉRIA: ')
-        qtd_temas = int(input(f"QUANTOS TEMAS PRETENDE ADICIONAR PARA {materia_nova}: "))
-
-        temas = []
-        for i in range(qtd_temas):
-            tema = input(f'DIGITE O {i + 1}° TEMA: ')
-            temas.append(tema)
-
-        materia = {
-            "nome": materia_nova,
-            "temas": temas
-        }
-
-        materias.append(materia)
-        salvar_dados()
-        print(f'A MATÉRIA {materia_nova} FOI ADICIONADA COM SUCESSO!!\n')
-
+        adicionar_materia()
     elif escolha == 2:
         listar_materias()
-
     elif escolha == 3:
-        if len(materias) == 0:
-            print('NÃO EXISTE MATÉRIAS CADASTRADAS.\n')
-        else:
-            listar_materias()
-            remover = int(input('DIGITE QUAL NÚMERO DESEJA REMOVER: '))
-            print()
-            if 1 <= remover <= len(materias):
-                removida = materias.pop(remover - 1)
-                salvar_dados()
-                print(f'A MATÉRIA {removida["nome"]} FOI REMOVIDA.\n')
-            else:
-                print('MATÉRIA INFORMADA NÃO EXISTE.\n')
-
+        remover_materia()
     elif escolha == 4:
-        listar_materias()
-        print()
-        select = int(input('QUAL MATÉRIA QUER EDITAR? '))
-        print()
-        if 1 <= select <= len(materias):
-            materia_edit = materias[select - 1]
-            print(f" {select}. {materia_edit['nome']}\n")
-            for cont in materia_edit['temas']:
-                print(f'   - {cont}')
-            print()
-            print(' 1. EDITAR NOME MATÉRIA\n')
-            print(' 2. REMOVER OU ADICIONAR TEMA\n')
-            print()
-            opcao = int(input("QUAL OPÇÃO DESEJA: "))
-            print()
-            if opcao == 1:
-                novo_nome = input("NOVO NOME DA MATÉRIA: ")
-                materia_edit['nome'] = novo_nome
-                salvar_dados()
-                print('Nome da matéria atualizado com sucesso.\n')
-            elif opcao == 2:
-                print('1. ADICIONAR TEMA')
-                print('2. REMOVER TEMA\n')
-                opcao_2 = int(input('ESCOLHA QUAL OPÇÃO DESEJA: '))
-                if opcao_2 < 1 or opcao_2 > 2:
-                    print('OPÇÃO INCORRETA.\n')
-                elif opcao_2 == 1:
-                    novo_tema = input('NOVO TEMA: ')
-                    materia_edit['temas'].append(novo_tema)
-                    salvar_dados()
-                    print(f'Tema "{novo_tema}" adicionado com sucesso.\n')
-                elif opcao_2 == 2:
-                    print(f"{select}. {materia_edit['nome']}")
-                    for i, tema in enumerate(materia_edit['temas'], start=1):
-                        print(f'  {i} - {tema}')
-                    print()
-                    excluir = int(input(f"QUAL NÚMERO DESEJA EXCLUIR DE {materia_edit['nome']}? "))
-                    if 1 <= excluir <= len(materia_edit['temas']):
-                        excluida = materia_edit['temas'].pop(excluir - 1)
-                        salvar_dados()
-                        print(f'Tema "{excluida}" removido com sucesso.\n')
-                    else:
-                        print('Número inválido.\n')
-            else:
-                print('OPÇÃO INCORRETA.\n')
-        else:
-            print('OPÇÃO INCORRETA.\n')
-
+        editar_materia()
     elif escolha == 5:
         print('ENCERRANDO SESSÃO... \n')
         break
     else:
         print('OPÇÃO INVÁLIDA.\n')
+
+# Fecha conexão ao sair
+conexao.close()
