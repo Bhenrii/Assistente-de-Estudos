@@ -32,7 +32,8 @@ conexao.commit()
 def adicionar_materia():
     print(" ADICIONANDO MATÉRIA NOVA  \n")
     materia_nova = input('DIGITE O NOME DA MATÉRIA: ')
-    qtd_temas = int(input(f"QUANTOS TEMAS PRETENDE ADICIONAR PARA {materia_nova}: "))
+    qtd_temas = int(
+        input(f"QUANTOS TEMAS PRETENDE ADICIONAR PARA {materia_nova}: "))
 
     temas = []
     for i in range(qtd_temas):
@@ -45,7 +46,8 @@ def adicionar_materia():
 
     # Inserir temas
     for tema in temas:
-        cursor.execute("INSERT INTO temas (id_materia, nome) VALUES (?, ?)", (id_materia, tema))
+        cursor.execute(
+            "INSERT INTO temas (id_materia, nome) VALUES (?, ?)", (id_materia, tema))
 
     conexao.commit()
     print(f'A MATÉRIA {materia_nova} FOI ADICIONADA COM SUCESSO!!\n')
@@ -58,9 +60,10 @@ def listar_materias():
     if len(materias) == 0:
         print('NENHUMA MATÉRIA CADASTRADA\n')
     else:
-        for materia in materias:
-            print(f"{materia[0]}. {materia[1]}")
-            cursor.execute("SELECT nome FROM temas WHERE id_materia = ?", (materia[0],))
+        for cont, materia in enumerate(materias, start=1):
+            print(f"{cont}. {materia[1]}")
+            cursor.execute(
+            "SELECT nome FROM temas WHERE id_materia = ?", (materia[0],))
             temas = cursor.fetchall()
             for tema in temas:
                 print(f'  - {tema[0]}')
@@ -120,7 +123,8 @@ def editar_materia():
 
     if opcao == 1:
         novo_nome = input("NOVO NOME DA MATÉRIA: ")
-        cursor.execute("UPDATE materias SET nome = ? WHERE id = ?", (novo_nome, materia[0]))
+        cursor.execute("UPDATE materias SET nome = ? WHERE id = ?",
+                       (novo_nome, materia[0]))
         conexao.commit()
         print('Nome da matéria atualizado com sucesso.\n')
 
@@ -131,18 +135,21 @@ def editar_materia():
 
         if opcao_2 == 1:
             novo_tema = input('NOVO TEMA: ')
-            cursor.execute("INSERT INTO temas (id_materia, nome) VALUES (?, ?)", (materia[0], novo_tema))
+            cursor.execute(
+                "INSERT INTO temas (id_materia, nome) VALUES (?, ?)", (materia[0], novo_tema))
             conexao.commit()
             print(f'Tema "{novo_tema}" adicionado com sucesso.\n')
 
         elif opcao_2 == 2:
-            cursor.execute("SELECT * FROM temas WHERE id_materia = ?", (materia[0],))
+            cursor.execute(
+                "SELECT * FROM temas WHERE id_materia = ?", (materia[0],))
             temas = cursor.fetchall()
             for i, t in enumerate(temas, start=1):
                 print(f"  {i} - {t[2]}")
 
             print()
-            excluir = int(input(f"QUAL NÚMERO DESEJA EXCLUIR DE {materia[1]}? "))
+            excluir = int(
+                input(f"QUAL NÚMERO DESEJA EXCLUIR DE {materia[1]}? "))
             if 1 <= excluir <= len(temas):
                 id_tema = temas[excluir - 1][0]
                 nome_tema = temas[excluir - 1][2]
